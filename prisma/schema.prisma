@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  OWNER
+  WAITER
+  CHEF
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  ordersCreated       Order[]              @relation("OrderCreatedBy")
+  expensesCreated     Expense[]            @relation("ExpenseCreatedBy")
+  reconciliations     CashReconciliation[] @relation("ReconciliationCreatedBy")
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  name        String
+  price       Decimal      @db.Decimal(10, 2)
+  category    String
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  recipeItems RecipeItem[]
+  orderItems  OrderItem[]
+}
+
+model InventoryItem {
+  id                String       @id @default(cuid())
+  name              String
+  unit              String
+  stockQty          Decimal      @db.Decimal(10, 2)
+  lowStockThreshold Decimal      @db.Decimal(10, 2)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  recipeItems       RecipeItem[]
+}
+
+model RecipeItem {
+  id              String        @id @default(cuid())
+  menuItem        MenuItem      @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  menuItemId      String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
+  inventoryItemId String
+  quantityNeeded  Decimal       @db.Decimal(10, 2)
+
+  @@unique([menuItemId, inventoryItemId])
+}
+
+enum OrderType {
+  DINE_IN
+  DELIVERY
+}
+
+enum OrderStatus {
+  OPEN
+  SENT_TO_KITCHEN
+  SERVED
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CBE
+  TELEBIRR
+  HALF_HALF
+  DUE
+}
+
+model Order {
+  id              String          @id @default(cuid())
+  type            OrderType
+  tableNumber     String?
+  ticketNumber    String?
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  customerId      String?
+  status          OrderStatus     @default(OPEN)
+  paymentMethod   PaymentMethod?
+  createdBy       User            @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  createdById     String
+  items           OrderItem[]
+  dueTransaction  DueTransaction?
+  sentToKitchenAt DateTime?
+  servedAt        DateTime?
+  paidAt          DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum OrderItemStatus {
+  PENDING
+  SERVED
+}
+
+model OrderItem {
+  id           String          @id @default(cuid())
+  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId      String
+  menuItem     MenuItem        @relation(fields: [menuItemId], references: [id])
+  menuItemId   String
+  quantity     Int
+  status       OrderItemStatus @default(PENDING)
+  priceAtOrder Decimal         @db.Decimal(10, 2)
+}
+
+model Customer {
+  id         String           @id @default(cuid())
+  name       String
+  phone      String           @unique
+  dueBalance Decimal          @default(0) @db.Decimal(10, 2)
+  createdAt  DateTime         @default(now())
+
+  orders     Order[]
+  dueTxns    DueTransaction[]
+}
+
+model DueTransaction {
+  id          String    @id @default(cuid())
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  String
+  order       Order     @relation(fields: [orderId], references: [id])
+  orderId     String    @unique
+  amount      Decimal   @db.Decimal(10, 2)
+  settled     Boolean   @default(false)
+  settledDate DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+enum ExpenseType {
+  RESTAURANT
+  PERSONAL
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  type        ExpenseType
+  category    String
+  amount      Decimal     @db.Decimal(10, 2)
+  date        DateTime
+  note        String?
+  createdBy   User        @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime    @default(now())
+}
+
+model CashReconciliation {
+  id           String   @id @default(cuid())
+  date         DateTime @unique
+  expectedCash Decimal  @db.Decimal(10, 2)
+  actualCash   Decimal  @db.Decimal(10, 2)
+  difference   Decimal  @db.Decimal(10, 2)
+  note         String?
+  createdBy    User     @relation("ReconciliationCreatedBy", fields: [createdById], references: [id])
+  createdById  String
+  createdAt    DateTime @default(now())
+}
