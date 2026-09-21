@@ -18,6 +18,7 @@ const PROTECTED_PREFIX_ROLE: Record<string, string> = {
  * which never runs in the Edge middleware runtime.
  */
 export const authConfig = {
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
   },
@@ -46,6 +47,20 @@ export const authConfig = {
       }
 
       return true;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id as string;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role;
+      }
+      return session;
     },
   },
 } satisfies NextAuthConfig;
