@@ -273,7 +273,7 @@ export function MenuItemForm({
                   + New ingredient
                 </Button>
               }
-              onCreated={(item) => {
+              onSaved={(item) => {
                 setAvailableInventory((prev) => [...prev, item]);
                 addRecipeRow(item.id);
               }}
