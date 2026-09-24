@@ -1,0 +1,211 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { MenuItemPicker, type CartLine, type MenuItemOption } from "@/components/menu-item-picker";
+
+const LOCKED_STATUSES = ["PAID", "SERVED", "CANCELLED"];
+const CANCELLABLE_STATUSES = ["OPEN", "SENT_TO_KITCHEN"];
+
+type OrderItem = {
+  id: string;
+  menuItemName: string;
+  quantity: number;
+  status: string;
+  priceAtOrder: string;
+};
+
+type Order = {
+  id: string;
+  type: string;
+  ticketNumber: string | null;
+  tableNumber: string | null;
+  status: string;
+  createdByName: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  items: OrderItem[];
+};
+
+export function OrderDetail({
+  order,
+  menuItems,
+}: {
+  order: Order;
+  menuItems: MenuItemOption[];
+}) {
+  const router = useRouter();
+  const [isAdding, setIsAdding] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const locked = LOCKED_STATUSES.includes(order.status);
+  const cancellable = CANCELLABLE_STATUSES.includes(order.status);
+  const total = order.items.reduce(
+    (sum, item) => sum + Number(item.priceAtOrder) * item.quantity,
+    0
+  );
+
+  async function handleAddItems(items: CartLine[]) {
+    setIsAdding(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error ?? "Failed to add items");
+        return;
+      }
+      toast.success("Items added");
+      router.refresh();
+    } finally {
+      setIsAdding(false);
+    }
+  }
+
+  async function handleRemoveItem(itemId: string) {
+    setRemovingId(itemId);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/items/${itemId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error ?? "Failed to remove item");
+        return;
+      }
+      toast.success("Item removed");
+      router.refresh();
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  async function handleCancelOrder() {
+    if (!confirm("Cancel this order? Any deducted stock will be restored.")) return;
+    setIsCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/cancel`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error ?? "Failed to cancel order");
+        return;
+      }
+      toast.success("Order cancelled");
+      router.refresh();
+    } finally {
+      setIsCancelling(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">
+            {order.type === "DINE_IN"
+              ? `Ticket ${order.ticketNumber ?? "-"}${
+                  order.tableNumber ? ` (Table ${order.tableNumber})` : ""
+                }`
+              : `${order.customerName} (${order.customerPhone})`}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Created by {order.createdByName}
+          </p>
+        </div>
+        <Badge>{order.status.replaceAll("_", " ")}</Badge>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {order.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No items yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {order.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.menuItemName}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>
+                      {(Number(item.priceAtOrder) * item.quantity).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.status === "SERVED" ? "default" : "secondary"}>
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {!locked && item.status === "PENDING" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={removingId === item.id}
+                          onClick={() => handleRemoveItem(item.id)}
+                        >
+                          {removingId === item.id ? "Removing..." : "Remove"}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <p className="text-sm text-muted-foreground text-right mt-3">
+            Total: {total.toFixed(2)}
+          </p>
+        </CardContent>
+      </Card>
+
+      {!locked && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MenuItemPicker
+              menuItems={menuItems}
+              onSubmit={handleAddItems}
+              submitLabel="Add to order"
+              isSubmitting={isAdding}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {cancellable && (
+        <Button variant="destructive" onClick={handleCancelOrder} disabled={isCancelling}>
+          {isCancelling ? "Cancelling..." : "Cancel order"}
+        </Button>
+      )}
+    </div>
+  );
+}

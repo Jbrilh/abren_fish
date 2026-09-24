@@ -6,10 +6,11 @@ const ROLE_HOME: Record<string, string> = {
   CHEF: "/chef",
 };
 
-const PROTECTED_PREFIX_ROLE: Record<string, string> = {
-  "/owner": "OWNER",
-  "/waiter": "WAITER",
-  "/chef": "CHEF",
+const PROTECTED_PREFIX_ROLES: Record<string, string[]> = {
+  "/owner": ["OWNER"],
+  "/waiter": ["WAITER"],
+  "/chef": ["CHEF"],
+  "/orders": ["OWNER", "WAITER"],
 };
 
 /**
@@ -38,11 +39,11 @@ export const authConfig = {
 
       if (!isLoggedIn) return false;
 
-      const matchedPrefix = Object.keys(PROTECTED_PREFIX_ROLE).find((prefix) =>
+      const matchedPrefix = Object.keys(PROTECTED_PREFIX_ROLES).find((prefix) =>
         pathname.startsWith(prefix)
       );
 
-      if (matchedPrefix && role !== PROTECTED_PREFIX_ROLE[matchedPrefix]) {
+      if (matchedPrefix && !PROTECTED_PREFIX_ROLES[matchedPrefix].includes(role ?? "")) {
         return Response.redirect(new URL(ROLE_HOME[role ?? ""] ?? "/login", nextUrl));
       }
 

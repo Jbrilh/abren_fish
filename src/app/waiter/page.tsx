@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { SignOutButton } from "@/components/sign-out-button";
+import { Button } from "@/components/ui/button";
 
 export default async function WaiterPage() {
   const session = await auth();
@@ -8,17 +10,19 @@ export default async function WaiterPage() {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Waiter — Orders</h1>
+          <h1 className="text-xl font-semibold">Waiter</h1>
           <p className="text-sm text-muted-foreground">
             Signed in as {session?.user?.name} (Waiter)
           </p>
         </div>
         <SignOutButton />
       </div>
-      <p className="text-sm text-muted-foreground">
-        Order entry, checkout, and the customer due list will land here in
-        later phases.
-      </p>
+      <div className="flex gap-2">
+        <Button render={<Link href="/orders" />}>View orders</Button>
+        <Button variant="outline" render={<Link href="/orders/new" />}>
+          New order
+        </Button>
+      </div>
     </div>
   );
 }

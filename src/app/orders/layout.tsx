@@ -2,38 +2,35 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { SignOutButton } from "@/components/sign-out-button";
 
-const NAV_LINKS = [
-  { href: "/owner", label: "Dashboard" },
-  { href: "/owner/menu", label: "Menu" },
-  { href: "/owner/inventory", label: "Inventory" },
-  { href: "/orders", label: "Orders" },
-];
-
-export default async function OwnerLayout({
+export default async function OrdersLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const homeHref = session?.user?.role === "OWNER" ? "/owner" : "/waiter";
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b">
         <div className="flex items-center justify-between px-6 py-3">
           <nav className="flex items-center gap-4">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
+            <Link
+              href={homeHref}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/orders"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Orders
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
-              {session?.user?.name} (Owner)
+              {session?.user?.name}
             </span>
             <SignOutButton />
           </div>
