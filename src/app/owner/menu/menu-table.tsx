@@ -22,6 +22,7 @@ type MenuRow = {
   price: string;
   isActive: boolean;
   recipeItemCount: number;
+  outOfStock: boolean;
 };
 
 export function MenuTable({ items }: { items: MenuRow[] }) {
@@ -72,10 +73,13 @@ export function MenuTable({ items }: { items: MenuRow[] }) {
             <TableCell className="font-medium">{item.name}</TableCell>
             <TableCell>{item.category}</TableCell>
             <TableCell>{item.price}</TableCell>
-            <TableCell>
+            <TableCell className="flex gap-1.5">
               <Badge variant={item.isActive ? "default" : "secondary"}>
                 {item.isActive ? "Active" : "Inactive"}
               </Badge>
+              {item.outOfStock && (
+                <Badge variant="destructive">Out of stock</Badge>
+              )}
             </TableCell>
             <TableCell>
               {item.recipeItemCount === 0 ? (

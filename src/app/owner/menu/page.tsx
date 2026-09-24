@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
+import { isOutOfStock } from "@/lib/inventory-status";
 import { MenuTable } from "./menu-table";
 
 export default async function MenuPage() {
   const items = await prisma.menuItem.findMany({
     orderBy: [{ category: "asc" }, { name: "asc" }],
-    include: { _count: { select: { recipeItems: true } } },
+    include: { recipeItems: { include: { inventoryItem: true } } },
   });
 
   const rows = items.map((item) => ({
@@ -15,7 +16,8 @@ export default async function MenuPage() {
     category: item.category,
     price: item.price.toString(),
     isActive: item.isActive,
-    recipeItemCount: item._count.recipeItems,
+    recipeItemCount: item.recipeItems.length,
+    outOfStock: item.recipeItems.length > 0 && isOutOfStock(item.recipeItems),
   }));
 
   return (
