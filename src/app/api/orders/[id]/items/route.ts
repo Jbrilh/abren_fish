@@ -54,7 +54,10 @@ export async function POST(
 
     return tx.order.findUnique({
       where: { id },
-      include: { items: { include: { menuItem: true } }, customer: true },
+      include: {
+        items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },
+        customer: true,
+      },
     });
   });
 

@@ -37,7 +37,10 @@ export async function POST(
     return tx.order.update({
       where: { id },
       data: { status: "CANCELLED", cancelledAt: new Date() },
-      include: { items: { include: { menuItem: true } }, customer: true },
+      include: {
+        items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },
+        customer: true,
+      },
     });
   });
 

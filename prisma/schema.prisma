@@ -120,6 +120,7 @@ model OrderItem {
   quantity     Int
   status       OrderItemStatus @default(PENDING)
   priceAtOrder Decimal         @db.Decimal(10, 2)
+  createdAt    DateTime        @default(now())
 }
 
 model Customer {

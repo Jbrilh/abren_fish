@@ -14,7 +14,7 @@ export default async function OrderDetailPage({
     prisma.order.findUnique({
       where: { id },
       include: {
-        items: { include: { menuItem: true } },
+        items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },
         customer: true,
         createdBy: { select: { name: true } },
       },

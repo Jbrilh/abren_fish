@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const orders = await prisma.order.findMany({
     where: status ? { status: status as never } : undefined,
     include: {
-      items: { include: { menuItem: true } },
+      items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },
       customer: true,
       createdBy: { select: { name: true } },
     },
@@ -73,7 +73,10 @@ export async function POST(request: Request) {
             }
           : undefined,
       },
-      include: { items: { include: { menuItem: true } }, customer: true },
+      include: {
+        items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },
+        customer: true,
+      },
     });
 
     if (hasItems) {
