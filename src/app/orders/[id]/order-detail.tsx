@@ -6,7 +6,16 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -16,6 +25,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MenuItemPicker, type CartLine, type MenuItemOption } from "@/components/menu-item-picker";
+
+const PAYMENT_METHODS = [
+  { value: "CASH", label: "Cash" },
+  { value: "CBE", label: "CBE" },
+  { value: "TELEBIRR", label: "Telebirr" },
+  { value: "HALF_HALF", label: "Half / half" },
+  { value: "DUE", label: "Due (customer tab)" },
+];
 
 const LOCKED_STATUSES = ["PAID", "SERVED", "CANCELLED"];
 const CANCELLABLE_STATUSES = ["OPEN", "SENT_TO_KITCHEN"];
@@ -34,6 +51,7 @@ type Order = {
   ticketNumber: string | null;
   tableNumber: string | null;
   status: string;
+  paymentMethod: string | null;
   createdByName: string;
   customerName: string | null;
   customerPhone: string | null;
@@ -51,6 +69,10 @@ export function OrderDetail({
   const [isAdding, setIsAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [dueCustomerName, setDueCustomerName] = useState("");
+  const [dueCustomerPhone, setDueCustomerPhone] = useState("");
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   useEffect(() => {
     const channel = supabase
@@ -74,6 +96,8 @@ export function OrderDetail({
 
   const locked = LOCKED_STATUSES.includes(order.status);
   const cancellable = CANCELLABLE_STATUSES.includes(order.status);
+  const readyForCheckout = order.status === "SERVED";
+  const hasCustomer = !!order.customerName;
   const total = order.items.reduce(
     (sum, item) => sum + Number(item.priceAtOrder) * item.quantity,
     0
@@ -134,6 +158,39 @@ export function OrderDetail({
     }
   }
 
+  async function handleCheckout() {
+    if (!paymentMethod) {
+      toast.error("Select a payment method.");
+      return;
+    }
+    if (paymentMethod === "DUE" && !hasCustomer && (!dueCustomerName.trim() || !dueCustomerPhone.trim())) {
+      toast.error("Customer name and phone are required for a due tab.");
+      return;
+    }
+
+    setIsCheckingOut(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethod,
+          customerName: !hasCustomer ? dueCustomerName : undefined,
+          customerPhone: !hasCustomer ? dueCustomerPhone : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error?.formErrors?.[0] ?? body?.error ?? "Checkout failed");
+        return;
+      }
+      toast.success("Payment recorded");
+      router.refresh();
+    } finally {
+      setIsCheckingOut(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -149,7 +206,14 @@ export function OrderDetail({
             Created by {order.createdByName}
           </p>
         </div>
-        <Badge>{order.status.replaceAll("_", " ")}</Badge>
+        <div className="text-right">
+          <Badge>{order.status.replaceAll("_", " ")}</Badge>
+          {order.paymentMethod && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Paid via {order.paymentMethod.replaceAll("_", " ")}
+            </p>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -205,6 +269,56 @@ export function OrderDetail({
           </p>
         </CardContent>
       </Card>
+
+      {readyForCheckout && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Checkout</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Payment method</Label>
+              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v ?? "")}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {paymentMethod === "DUE" && !hasCustomer && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dueName">Customer name</Label>
+                  <Input
+                    id="dueName"
+                    value={dueCustomerName}
+                    onChange={(e) => setDueCustomerName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duePhone">Phone</Label>
+                  <Input
+                    id="duePhone"
+                    value={dueCustomerPhone}
+                    onChange={(e) => setDueCustomerPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            <Button onClick={handleCheckout} disabled={isCheckingOut}>
+              {isCheckingOut ? "Processing..." : "Complete payment"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {!locked && (
         <Card>

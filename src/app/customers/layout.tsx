@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { SignOutButton } from "@/components/sign-out-button";
 
-export default async function OrdersLayout({
+export default async function CustomersLayout({
   children,
 }: {
   children: React.ReactNode;

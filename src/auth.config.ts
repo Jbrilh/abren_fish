@@ -11,6 +11,7 @@ const PROTECTED_PREFIX_ROLES: Record<string, string[]> = {
   "/waiter": ["WAITER"],
   "/chef": ["CHEF"],
   "/orders": ["OWNER", "WAITER"],
+  "/customers": ["OWNER", "WAITER"],
 };
 
 /**

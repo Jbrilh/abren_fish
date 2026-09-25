@@ -22,6 +22,9 @@ export default async function WaiterPage() {
         <Button variant="outline" render={<Link href="/orders/new" />}>
           New order
         </Button>
+        <Button variant="outline" render={<Link href="/customers" />}>
+          Due list
+        </Button>
       </div>
     </div>
   );

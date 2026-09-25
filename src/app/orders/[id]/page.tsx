@@ -45,6 +45,7 @@ export default async function OrderDetailPage({
           ticketNumber: order.ticketNumber,
           tableNumber: order.tableNumber,
           status: order.status,
+          paymentMethod: order.paymentMethod,
           createdByName: order.createdBy.name,
           customerName: order.customer?.name ?? null,
           customerPhone: order.customer?.phone ?? null,
