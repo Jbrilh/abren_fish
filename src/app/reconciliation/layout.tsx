@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { StaffNav } from "@/components/staff-nav";
 
-export default async function OrdersLayout({
+export default async function ReconciliationLayout({
   children,
 }: {
   children: React.ReactNode;

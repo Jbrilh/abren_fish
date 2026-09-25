@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/owner/inventory", label: "Inventory" },
   { href: "/orders", label: "Orders" },
   { href: "/customers", label: "Due list" },
+  { href: "/reconciliation", label: "Reconciliation" },
 ];
 
 export default async function OwnerLayout({
