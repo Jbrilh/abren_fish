@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/extract-error-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,7 +97,7 @@ export function MenuItemForm({
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error?.formErrors?.[0] ?? "Failed to save menu item");
+        toast.error(extractErrorMessage(body, "Failed to save menu item"));
         return;
       }
 
@@ -138,7 +139,7 @@ export function MenuItemForm({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error ?? "Failed to delete menu item");
+        toast.error(extractErrorMessage(body, "Failed to delete menu item"));
         return;
       }
       toast.success("Menu item deleted");

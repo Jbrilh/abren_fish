@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-client";
+import { extractErrorMessage } from "@/lib/extract-error-message";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -113,7 +114,7 @@ export function OrderDetail({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error ?? "Failed to add items");
+        toast.error(extractErrorMessage(body, "Failed to add items"));
         return;
       }
       toast.success("Items added");
@@ -131,7 +132,7 @@ export function OrderDetail({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error ?? "Failed to remove item");
+        toast.error(extractErrorMessage(body, "Failed to remove item"));
         return;
       }
       toast.success("Item removed");
@@ -148,7 +149,7 @@ export function OrderDetail({
       const res = await fetch(`/api/orders/${order.id}/cancel`, { method: "POST" });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error ?? "Failed to cancel order");
+        toast.error(extractErrorMessage(body, "Failed to cancel order"));
         return;
       }
       toast.success("Order cancelled");
@@ -175,13 +176,15 @@ export function OrderDetail({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paymentMethod,
-          customerName: !hasCustomer ? dueCustomerName : undefined,
-          customerPhone: !hasCustomer ? dueCustomerPhone : undefined,
+          customerName:
+            paymentMethod === "DUE" && !hasCustomer ? dueCustomerName : undefined,
+          customerPhone:
+            paymentMethod === "DUE" && !hasCustomer ? dueCustomerPhone : undefined,
         }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error?.formErrors?.[0] ?? body?.error ?? "Checkout failed");
+        toast.error(extractErrorMessage(body, "Checkout failed"));
         return;
       }
       toast.success("Payment recorded");

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/extract-error-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +57,7 @@ export function InventoryItemDialog({
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         toast.error(
-          body?.error?.formErrors?.[0] ?? `Failed to ${isEdit ? "save" : "create"} ingredient`
+          extractErrorMessage(body, `Failed to ${isEdit ? "save" : "create"} ingredient`)
         );
         return;
       }

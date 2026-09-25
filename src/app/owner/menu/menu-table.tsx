@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/extract-error-message";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -37,7 +38,7 @@ export function MenuTable({ items }: { items: MenuRow[] }) {
       const res = await fetch(`/api/menu-items/${item.id}`, { method: "DELETE" });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error ?? "Failed to delete menu item");
+        toast.error(extractErrorMessage(body, "Failed to delete menu item"));
         return;
       }
       toast.success("Menu item deleted");
