@@ -15,7 +15,11 @@ export async function authenticate(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return "Invalid username or password.";
+      if (error.type === "CredentialsSignin") {
+        return "Invalid username or password.";
+      }
+      console.error("Unexpected auth error:", error);
+      return `Sign-in failed unexpectedly (${error.type}). Check server logs.`;
     }
     throw error;
   }
