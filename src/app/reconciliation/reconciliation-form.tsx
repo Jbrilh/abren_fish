@@ -92,7 +92,7 @@ export function ReconciliationForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Expected cash</Label>
               <p className="text-lg font-medium">{expectedCash.toFixed(2)}</p>

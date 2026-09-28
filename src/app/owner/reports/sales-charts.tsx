@@ -97,7 +97,7 @@ export function SalesCharts({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 max-w-2xl">
+      <div className="grid grid-cols-1 gap-4 max-w-2xl sm:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">

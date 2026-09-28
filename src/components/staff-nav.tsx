@@ -7,19 +7,22 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "cn";
 
 const LINKS = [
-  { href: "/orders", label: "Orders", icon: ClipboardList },
-  { href: "/customers", label: "Due list", icon: Wallet },
-  { href: "/reconciliation", label: "Reconciliation", icon: CalendarDays },
+  { href: "/orders", label: "Orders", icon: ClipboardList, roles: ["OWNER", "WAITER"] },
+  { href: "/customers", label: "Due list", icon: Wallet, roles: ["OWNER"] },
+  { href: "/reconciliation", label: "Reconciliation", icon: CalendarDays, roles: ["OWNER"] },
 ];
 
 export function StaffNav({
   homeHref,
   userName,
+  role,
 }: {
   homeHref: string;
   userName: string | null | undefined;
+  role: string | undefined;
 }) {
   const pathname = usePathname();
+  const links = LINKS.filter((link) => !role || link.roles.includes(role));
 
   return (
     <header className="bg-primary text-primary-foreground shadow-sm">
@@ -40,7 +43,7 @@ export function StaffNav({
               <LayoutGrid className="size-4" />
               Dashboard
             </Link>
-            {LINKS.map((link) => {
+            {links.map((link) => {
               const active = pathname.startsWith(link.href);
               const Icon = link.icon;
               return (

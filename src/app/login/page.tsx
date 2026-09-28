@@ -21,7 +21,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a3d3a] via-[#0f766e] to-[#14b8a6] px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-[#0a3d3a] via-[#0f766e] to-[#14b8a6] px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">

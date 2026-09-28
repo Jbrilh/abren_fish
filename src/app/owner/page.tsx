@@ -54,7 +54,7 @@ export default async function OwnerPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 max-w-xl">
+      <div className="grid grid-cols-1 gap-4 max-w-xl sm:grid-cols-2">
         <Link href="/owner/inventory">
           <Card className="transition-shadow hover:shadow-md">
             <CardContent className="flex items-center gap-4 pt-1">

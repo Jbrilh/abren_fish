@@ -12,7 +12,7 @@ export default async function OwnerLayout({
   const session = await auth();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <header className="bg-primary text-primary-foreground shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href="/owner" className="flex items-center gap-2 font-heading font-semibold">

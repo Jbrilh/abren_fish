@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  Fish,
-  PlusCircle,
-  ClipboardList,
-  Wallet,
-  CalendarDays,
-} from "lucide-react";
+import { Fish, PlusCircle, ClipboardList } from "lucide-react";
 import { auth } from "@/auth";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,25 +18,13 @@ const ACTIONS = [
     description: "See open and recent orders",
     icon: ClipboardList,
   },
-  {
-    href: "/customers",
-    label: "Due list",
-    description: "Customer tabs and balances",
-    icon: Wallet,
-  },
-  {
-    href: "/reconciliation",
-    label: "Reconciliation",
-    description: "Count today's cash",
-    icon: CalendarDays,
-  },
 ];
 
 export default async function WaiterPage() {
   const session = await auth();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <header className="bg-primary text-primary-foreground shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2 font-heading font-semibold">

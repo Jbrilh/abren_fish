@@ -49,7 +49,7 @@ export default async function PnlPage({
         personal expenses.
       </p>
 
-      <div className="grid grid-cols-3 gap-4 max-w-2xl mb-6">
+      <div className="grid grid-cols-1 gap-4 max-w-2xl mb-6 sm:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">Revenue</CardTitle>
