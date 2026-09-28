@@ -1,18 +1,8 @@
 import Link from "next/link";
+import { Fish } from "lucide-react";
 import { auth } from "@/auth";
 import { SignOutButton } from "@/components/sign-out-button";
-
-const NAV_LINKS = [
-  { href: "/owner", label: "Dashboard" },
-  { href: "/owner/menu", label: "Menu" },
-  { href: "/owner/inventory", label: "Inventory" },
-  { href: "/orders", label: "Orders" },
-  { href: "/customers", label: "Due list" },
-  { href: "/reconciliation", label: "Reconciliation" },
-  { href: "/owner/reports", label: "Reports" },
-  { href: "/owner/pnl", label: "P&L" },
-  { href: "/owner/personal", label: "Personal" },
-];
+import { OwnerNav } from "./owner-nav";
 
 export default async function OwnerLayout({
   children,
@@ -23,28 +13,25 @@ export default async function OwnerLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b">
+      <header className="bg-primary text-primary-foreground shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
-          <nav className="flex items-center gap-4">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
-              {session?.user?.name} (Owner)
+          <Link href="/owner" className="flex items-center gap-2 font-heading font-semibold">
+            <Fish className="size-5" />
+            <span>
+              Abren Fish{" "}
+              <span className="font-normal text-primary-foreground/60">· Owner</span>
             </span>
-            <SignOutButton />
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-primary-foreground/80">
+              {session?.user?.name}
+            </span>
+            <SignOutButton className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" />
           </div>
         </div>
+        <OwnerNav />
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 bg-muted/40">{children}</main>
     </div>
   );
 }

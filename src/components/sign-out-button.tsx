@@ -1,15 +1,18 @@
-import { signOut } from "@/auth";
+import { LogOut } from "lucide-react";
+import { signOutAction } from "@/lib/sign-out-action";
 import { Button } from "@/components/ui/button";
+import { cn } from "cn";
 
-export function SignOutButton() {
+export function SignOutButton({ className }: { className?: string }) {
   return (
-    <form
-      action={async () => {
-        "use server";
-        await signOut({ redirectTo: "/login" });
-      }}
-    >
-      <Button type="submit" variant="outline" size="sm">
+    <form action={signOutAction}>
+      <Button
+        type="submit"
+        variant="outline"
+        size="sm"
+        className={cn("gap-1.5", className)}
+      >
+        <LogOut className="size-3.5" />
         Sign out
       </Button>
     </form>

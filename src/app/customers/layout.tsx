@@ -12,7 +12,7 @@ export default async function CustomersLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <StaffNav homeHref={homeHref} userName={session?.user?.name} />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 bg-muted/40">{children}</main>
     </div>
   );
 }
