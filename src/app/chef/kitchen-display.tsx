@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UtensilsCrossed, Truck, Check, ChefHat } from "lucide-react";
+import { UtensilsCrossed, Truck, Check, CheckCheck, ChefHat } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 import { extractErrorMessage } from "@/lib/extract-error-message";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "cn";
 
 type OrderItem = {
@@ -45,6 +45,7 @@ export function KitchenDisplay() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [servingId, setServingId] = useState<string | null>(null);
+  const [servingAllId, setServingAllId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     const res = await fetch("/api/orders?status=SENT_TO_KITCHEN");
@@ -107,6 +108,23 @@ export function KitchenDisplay() {
       fetchOrders();
     } finally {
       setServingId(null);
+    }
+  }
+
+  async function markAllServed(orderId: string) {
+    setServingAllId(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/serve-all`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(extractErrorMessage(body, "Failed to mark order served"));
+        return;
+      }
+      fetchOrders();
+    } finally {
+      setServingAllId(null);
     }
   }
 
@@ -197,6 +215,20 @@ export function KitchenDisplay() {
                 </div>
               ))}
             </CardContent>
+            {order.items.length > 1 && (
+              <CardFooter>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-1.5"
+                  disabled={servingAllId === order.id}
+                  onClick={() => markAllServed(order.id)}
+                >
+                  <CheckCheck className="size-4" />
+                  {servingAllId === order.id ? "..." : "All served"}
+                </Button>
+              </CardFooter>
+            )}
           </Card>
         );
       })}

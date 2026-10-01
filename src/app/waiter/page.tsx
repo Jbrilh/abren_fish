@@ -26,7 +26,10 @@ export default async function WaiterPage() {
         status: { not: "CANCELLED" },
         createdAt: { gte: getBusinessDayStart() },
       },
-      include: { items: true, customer: true },
+      include: {
+        items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },
+        customer: true,
+      },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -101,17 +104,23 @@ export default async function WaiterPage() {
                                 }`
                               : order.customer?.name ?? "Delivery"}
                           </p>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {order.items.length} item
-                            {order.items.length === 1 ? "" : "s"} ·{" "}
-                            {computeOrderTotal(order.items).toFixed(2)}
-                          </span>
                           <Badge variant={STATUS_VARIANT[order.status] ?? "default"}>
                             {order.status.replaceAll("_", " ")}
                           </Badge>
                         </div>
+                        {order.items.length > 0 && (
+                          <p className="mt-1 truncate text-sm text-muted-foreground">
+                            {order.items
+                              .slice(0, 3)
+                              .map((item) => `${item.quantity}× ${item.menuItem.name}`)
+                              .join(", ")}
+                            {order.items.length > 3 &&
+                              ` +${order.items.length - 3} more`}
+                          </p>
+                        )}
+                        <p className="mt-1 text-sm font-medium">
+                          {computeOrderTotal(order.items).toFixed(2)}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
