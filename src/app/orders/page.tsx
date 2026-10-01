@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { computeOrderTotal } from "@/lib/order-service";
+import { getBusinessDayStart } from "@/lib/business-day";
 import {
   Table,
   TableBody,
@@ -22,20 +23,27 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 
 export default async function OrdersPage() {
   const orders = await prisma.order.findMany({
-    where: { status: { not: "CANCELLED" } },
+    where: {
+      status: { not: "CANCELLED" },
+      createdAt: { gte: getBusinessDayStart() },
+    },
     include: { items: true, customer: true },
     orderBy: { createdAt: "desc" },
   });
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-1 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Orders</h1>
         <Button render={<Link href="/orders/new" />}>New order</Button>
       </div>
+      <p className="mb-5 text-sm text-muted-foreground">
+        Today&apos;s orders since the 6am shift start. Older orders are kept
+        in reports but no longer shown here.
+      </p>
 
       {orders.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No orders yet.</p>
+        <p className="text-sm text-muted-foreground">No orders yet today.</p>
       ) : (
         <Table>
           <TableHeader>

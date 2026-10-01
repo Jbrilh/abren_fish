@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "cn";
 
 export type MenuItemOption = {
   id: string;
@@ -21,7 +22,10 @@ export function MenuItemPicker({
   isSubmitting,
 }: {
   menuItems: MenuItemOption[];
-  onSubmit: (items: CartLine[]) => void | Promise<void>;
+  /** Return false (or throw) to keep the cart as-is - e.g. when the
+   * caller's own validation rejects the submission. Any other return
+   * value is treated as success and clears the cart. */
+  onSubmit: (items: CartLine[]) => boolean | void | Promise<boolean | void>;
   submitLabel: string;
   isSubmitting?: boolean;
 }) {
@@ -53,8 +57,8 @@ export function MenuItemPicker({
 
   async function handleSubmit() {
     if (cartLines.length === 0) return;
-    await onSubmit(cartLines);
-    setCart({});
+    const result = await onSubmit(cartLines);
+    if (result !== false) setCart({});
   }
 
   if (menuItems.length === 0) {
@@ -69,46 +73,62 @@ export function MenuItemPicker({
     <div className="space-y-5">
       {Object.entries(grouped).map(([category, items]) => (
         <div key={category}>
-          <h3 className="text-sm font-semibold mb-1.5">{category}</h3>
-          <div className="space-y-1">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between py-1.5 border-b last:border-0"
-              >
-                <div className="flex items-center gap-2">
-                  <span>{item.name}</span>
-                  {item.outOfStock && (
-                    <Badge variant="destructive">Out of stock</Badge>
+          <h3 className="text-sm font-semibold mb-2">{category}</h3>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((item) => {
+              const qty = cart[item.id] ?? 0;
+              const selected = qty > 0;
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "flex flex-col gap-2 rounded-xl border-2 p-3 transition-colors",
+                    selected
+                      ? "border-chart-1 bg-chart-1/10"
+                      : "border-border bg-card"
                   )}
-                  <span className="text-sm text-muted-foreground">
-                    {item.price}
-                  </span>
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{item.name}</p>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <span className="text-sm text-muted-foreground">
+                        {item.price}
+                      </span>
+                      {item.outOfStock && (
+                        <Badge variant="destructive">Out of stock</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setQty(item.id, qty - 1)}
+                      disabled={!qty}
+                    >
+                      -
+                    </Button>
+                    <span
+                      className={cn(
+                        "text-sm font-semibold",
+                        selected && "text-chart-1"
+                      )}
+                    >
+                      {qty}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setQty(item.id, qty + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => setQty(item.id, (cart[item.id] ?? 0) - 1)}
-                    disabled={!cart[item.id]}
-                  >
-                    -
-                  </Button>
-                  <span className="w-6 text-center text-sm">
-                    {cart[item.id] ?? 0}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => setQty(item.id, (cart[item.id] ?? 0) + 1)}
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}

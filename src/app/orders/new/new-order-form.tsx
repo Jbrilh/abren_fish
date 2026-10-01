@@ -22,11 +22,11 @@ export function NewOrderForm({ menuItems }: { menuItems: MenuItemOption[] }) {
   async function handlePlaceOrder(items: CartLine[]) {
     if (type === "DINE_IN" && !ticketNumber.trim()) {
       toast.error("Ticket number is required for dine-in orders.");
-      return;
+      return false;
     }
     if (type === "DELIVERY" && (!customerName.trim() || !customerPhone.trim())) {
       toast.error("Customer name and phone are required for delivery orders.");
-      return;
+      return false;
     }
 
     setIsSubmitting(true);
@@ -47,12 +47,13 @@ export function NewOrderForm({ menuItems }: { menuItems: MenuItemOption[] }) {
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         toast.error(extractErrorMessage(body, "Failed to create order"));
-        return;
+        return false;
       }
 
       const order = await res.json();
       toast.success("Order placed");
       router.push(`/orders/${order.id}`);
+      return true;
     } finally {
       setIsSubmitting(false);
     }

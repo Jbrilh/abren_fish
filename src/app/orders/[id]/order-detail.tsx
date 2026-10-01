@@ -115,10 +115,11 @@ export function OrderDetail({
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         toast.error(extractErrorMessage(body, "Failed to add items"));
-        return;
+        return false;
       }
       toast.success("Items added");
       router.refresh();
+      return true;
     } finally {
       setIsAdding(false);
     }

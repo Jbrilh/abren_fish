@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { computeOrderTotal } from "@/lib/order-service";
+import { getBusinessDayStart } from "@/lib/business-day";
 import { cn } from "cn";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
@@ -21,10 +22,12 @@ export default async function WaiterPage() {
   const [session, orders] = await Promise.all([
     auth(),
     prisma.order.findMany({
-      where: { status: { not: "CANCELLED" } },
+      where: {
+        status: { not: "CANCELLED" },
+        createdAt: { gte: getBusinessDayStart() },
+      },
       include: { items: true, customer: true },
       orderBy: { createdAt: "desc" },
-      take: 30,
     }),
   ]);
 
@@ -52,16 +55,19 @@ export default async function WaiterPage() {
       </header>
 
       <main className="flex-1 bg-muted/40 p-4 sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between">
           <h1 className="font-heading text-lg font-semibold">Orders</h1>
           <Button render={<Link href="/orders/new" />} className="gap-1.5">
             <PlusCircle className="size-4" />
             New order
           </Button>
         </div>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Today&apos;s orders since the 6am shift start.
+        </p>
 
         {orders.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No orders yet.</p>
+          <p className="text-sm text-muted-foreground">No orders yet today.</p>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {orders.map((order) => {
