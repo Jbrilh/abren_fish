@@ -26,22 +26,26 @@ export function StaffNav({
 
   return (
     <header className="bg-primary text-primary-foreground shadow-sm">
-      <div className="flex items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-6">
-          <Link href={homeHref} className="flex items-center gap-2 font-heading font-semibold">
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+          <Link
+            href={homeHref}
+            className="flex shrink-0 items-center gap-2 font-heading font-semibold"
+          >
             <Fish className="size-5" />
-            <span>Abren Fish</span>
+            <span className="hidden sm:inline">Abren Fish</span>
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="flex min-w-0 items-center gap-0.5 sm:gap-1">
             <Link
               href={homeHref}
+              title="Dashboard"
               className={cn(
-                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-primary-foreground/75 transition-colors hover:bg-white/10 hover:text-primary-foreground",
+                "flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-primary-foreground/75 transition-colors hover:bg-white/10 hover:text-primary-foreground sm:px-3",
                 pathname === homeHref && "bg-white/15 text-primary-foreground"
               )}
             >
               <LayoutGrid className="size-4" />
-              Dashboard
+              <span className="hidden sm:inline">Dashboard</span>
             </Link>
             {links.map((link) => {
               const active = pathname.startsWith(link.href);
@@ -50,21 +54,24 @@ export function StaffNav({
                 <Link
                   key={link.href}
                   href={link.href}
+                  title={link.label}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-primary-foreground/75 transition-colors hover:bg-white/10 hover:text-primary-foreground",
+                    "flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-primary-foreground/75 transition-colors hover:bg-white/10 hover:text-primary-foreground sm:px-3",
                     active && "bg-white/15 text-primary-foreground"
                   )}
                 >
                   <Icon className="size-4" />
-                  {link.label}
+                  <span className="hidden sm:inline">{link.label}</span>
                 </Link>
               );
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-primary-foreground/80">{userName}</span>
-          <SignOutButton className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" />
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <span className="hidden text-sm text-primary-foreground/80 sm:inline">
+            {userName}
+          </span>
+          <SignOutButton className="border-white/30 bg-transparent px-2 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground sm:px-3" />
         </div>
       </div>
     </header>
