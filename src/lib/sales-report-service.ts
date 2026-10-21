@@ -24,7 +24,7 @@ export async function getSalesReport(startDateStr: string, endDateStr: string) {
   let totalRevenue = 0;
 
   for (const order of orders) {
-    const total = computeOrderTotal(order.items);
+    const total = computeOrderTotal(order.items, order.type);
     totalRevenue += total;
 
     const day = order.paidAt!.toISOString().slice(0, 10);

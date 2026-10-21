@@ -25,7 +25,7 @@ type Transaction = {
 type Customer = {
   id: string;
   name: string;
-  phone: string;
+  phone: string | null;
   dueBalance: string;
   transactions: Transaction[];
 };
@@ -67,7 +67,8 @@ export function DueList({ customers }: { customers: Customer[] }) {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>
-                {customer.name} · {customer.phone}
+                {customer.name}
+                {customer.phone ? ` · ${customer.phone}` : ""}
               </span>
               <span className="text-destructive">
                 Owes {Number(customer.dueBalance).toFixed(2)}

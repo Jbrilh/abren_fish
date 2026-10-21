@@ -31,12 +31,12 @@ export async function POST(
   }
 
   if (data.paymentMethod === "DUE" && !order.customerId) {
-    if (!data.customerName || !data.customerPhone) {
+    if (!data.customerName?.trim() && !data.customerPhone?.trim()) {
       return Response.json(
         {
           error: {
             formErrors: [
-              "Customer name and phone are required to put an order on a due tab.",
+              "A customer name or phone number is required to put an order on a due tab.",
             ],
           },
         },
@@ -45,18 +45,23 @@ export async function POST(
     }
   }
 
-  const total = computeOrderTotal(order.items);
+  const total = computeOrderTotal(order.items, order.type);
 
   const updatedOrder = await prisma.$transaction(async (tx) => {
     let customerId = order.customerId;
 
     if (data.paymentMethod === "DUE") {
       if (!customerId) {
-        const customer = await tx.customer.upsert({
-          where: { phone: data.customerPhone! },
-          update: { name: data.customerName! },
-          create: { name: data.customerName!, phone: data.customerPhone! },
-        });
+        const name = data.customerName?.trim() || data.customerPhone!.trim();
+        // Phone is the only reliable lookup key - with name-only, there's no
+        // safe way to match an existing customer, so always create fresh.
+        const customer = data.customerPhone?.trim()
+          ? await tx.customer.upsert({
+              where: { phone: data.customerPhone.trim() },
+              update: { name },
+              create: { name, phone: data.customerPhone.trim() },
+            })
+          : await tx.customer.create({ data: { name } });
         customerId = customer.id;
       }
 

@@ -21,7 +21,7 @@ export async function computeExpectedCash(dateStr: string) {
   });
 
   return orders.reduce((sum, order) => {
-    const total = computeOrderTotal(order.items);
+    const total = computeOrderTotal(order.items, order.type);
     return sum + (order.paymentMethod === "HALF_HALF" ? total * 0.5 : total);
   }, 0);
 }

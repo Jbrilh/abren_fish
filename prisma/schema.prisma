@@ -128,7 +128,7 @@ model OrderItem {
 model Customer {
   id         String           @id @default(cuid())
   name       String
-  phone      String           @unique
+  phone      String?          @unique
   dueBalance Decimal          @default(0) @db.Decimal(10, 2)
   createdAt  DateTime         @default(now())
 

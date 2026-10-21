@@ -20,6 +20,8 @@ export function MenuItemPicker({
   onSubmit,
   submitLabel,
   isSubmitting,
+  extraFee,
+  extraFeeLabel,
 }: {
   menuItems: MenuItemOption[];
   /** Return false (or throw) to keep the cart as-is - e.g. when the
@@ -28,6 +30,11 @@ export function MenuItemPicker({
   onSubmit: (items: CartLine[]) => boolean | void | Promise<boolean | void>;
   submitLabel: string;
   isSubmitting?: boolean;
+  /** An extra flat amount added to the displayed total (e.g. a
+   * delivery/takeaway-box fee) - purely a display concern, the actual
+   * amount charged is computed server-side. */
+  extraFee?: number;
+  extraFeeLabel?: string;
 }) {
   const [cart, setCart] = useState<Record<string, number>>({});
 
@@ -50,10 +57,11 @@ export function MenuItemPicker({
     quantity,
   }));
 
-  const total = cartLines.reduce((sum, line) => {
+  const itemsTotal = cartLines.reduce((sum, line) => {
     const item = menuItems.find((m) => m.id === line.menuItemId);
     return sum + (item ? Number(item.price) * line.quantity : 0);
   }, 0);
+  const total = itemsTotal + (cartLines.length > 0 ? (extraFee ?? 0) : 0);
 
   async function handleSubmit() {
     if (cartLines.length === 0) return;
@@ -135,6 +143,11 @@ export function MenuItemPicker({
 
       <div className="flex items-center justify-between pt-2 border-t">
         <span className="text-sm text-muted-foreground">
+          {extraFee && cartLines.length > 0 && (
+            <span className="mr-2">
+              {extraFeeLabel ?? "Fee"}: {extraFee.toFixed(2)} +
+            </span>
+          )}
           Total: {total.toFixed(2)}
         </span>
         <Button

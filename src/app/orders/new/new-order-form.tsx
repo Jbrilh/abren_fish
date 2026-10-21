@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/extract-error-message";
+import { TAKEAWAY_BOX_FEE } from "@/lib/order-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -137,6 +138,8 @@ export function NewOrderForm({ menuItems }: { menuItems: MenuItemOption[] }) {
             onSubmit={handlePlaceOrder}
             submitLabel="Place order"
             isSubmitting={isSubmitting}
+            extraFee={type === "DELIVERY" ? TAKEAWAY_BOX_FEE : undefined}
+            extraFeeLabel="Takeaway boxes"
           />
         </CardContent>
       </Card>

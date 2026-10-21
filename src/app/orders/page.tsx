@@ -70,7 +70,9 @@ export default async function OrdersPage() {
                     : `${order.customer?.name ?? "-"} (${order.customer?.phone ?? "-"})`}
                 </TableCell>
                 <TableCell>{order.items.length}</TableCell>
-                <TableCell>{computeOrderTotal(order.items).toFixed(2)}</TableCell>
+                <TableCell>
+                  {computeOrderTotal(order.items, order.type).toFixed(2)}
+                </TableCell>
                 <TableCell>
                   <Badge variant={STATUS_VARIANT[order.status] ?? "default"}>
                     {order.status.replaceAll("_", " ")}

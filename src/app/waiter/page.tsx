@@ -119,7 +119,7 @@ export default async function WaiterPage() {
                           </p>
                         )}
                         <p className="mt-1 text-sm font-medium">
-                          {computeOrderTotal(order.items).toFixed(2)}
+                          {computeOrderTotal(order.items, order.type).toFixed(2)}
                         </p>
                       </div>
                     </CardContent>

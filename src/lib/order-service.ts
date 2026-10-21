@@ -34,13 +34,17 @@ export async function applyInventoryDelta(
   }
 }
 
+export const TAKEAWAY_BOX_FEE = 70;
+
 export function computeOrderTotal(
-  items: { priceAtOrder: Prisma.Decimal | string; quantity: number }[]
+  items: { priceAtOrder: Prisma.Decimal | string; quantity: number }[],
+  orderType?: string
 ) {
-  return items.reduce(
+  const itemsTotal = items.reduce(
     (sum, item) => sum + Number(item.priceAtOrder) * item.quantity,
     0
   );
+  return orderType === "DELIVERY" ? itemsTotal + TAKEAWAY_BOX_FEE : itemsTotal;
 }
 
 export const NON_CANCELLABLE_STATUSES = ["PAID", "SERVED", "CANCELLED"];

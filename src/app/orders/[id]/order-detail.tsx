@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-client";
 import { extractErrorMessage } from "@/lib/extract-error-message";
+import { computeOrderTotal, TAKEAWAY_BOX_FEE } from "@/lib/order-service";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -99,10 +100,7 @@ export function OrderDetail({
   const cancellable = CANCELLABLE_STATUSES.includes(order.status);
   const readyForCheckout = order.status === "SERVED";
   const hasCustomer = !!order.customerName;
-  const total = order.items.reduce(
-    (sum, item) => sum + Number(item.priceAtOrder) * item.quantity,
-    0
-  );
+  const total = computeOrderTotal(order.items, order.type);
 
   async function handleAddItems(items: CartLine[]) {
     setIsAdding(true);
@@ -165,8 +163,13 @@ export function OrderDetail({
       toast.error("Select a payment method.");
       return;
     }
-    if (paymentMethod === "DUE" && !hasCustomer && (!dueCustomerName.trim() || !dueCustomerPhone.trim())) {
-      toast.error("Customer name and phone are required for a due tab.");
+    if (
+      paymentMethod === "DUE" &&
+      !hasCustomer &&
+      !dueCustomerName.trim() &&
+      !dueCustomerPhone.trim()
+    ) {
+      toast.error("A customer name or phone number is required for a due tab.");
       return;
     }
 
@@ -178,9 +181,13 @@ export function OrderDetail({
         body: JSON.stringify({
           paymentMethod,
           customerName:
-            paymentMethod === "DUE" && !hasCustomer ? dueCustomerName : undefined,
+            paymentMethod === "DUE" && !hasCustomer
+              ? dueCustomerName.trim() || undefined
+              : undefined,
           customerPhone:
-            paymentMethod === "DUE" && !hasCustomer ? dueCustomerPhone : undefined,
+            paymentMethod === "DUE" && !hasCustomer
+              ? dueCustomerPhone.trim() || undefined
+              : undefined,
         }),
       });
       if (!res.ok) {
@@ -268,7 +275,12 @@ export function OrderDetail({
               </TableBody>
             </Table>
           )}
-          <p className="text-sm text-muted-foreground text-right mt-3">
+          {order.type === "DELIVERY" && (
+            <p className="text-sm text-muted-foreground text-right mt-3">
+              Takeaway boxes: {TAKEAWAY_BOX_FEE.toFixed(2)}
+            </p>
+          )}
+          <p className="text-sm font-medium text-right mt-1">
             Total: {total.toFixed(2)}
           </p>
         </CardContent>
@@ -297,22 +309,27 @@ export function OrderDetail({
             </div>
 
             {paymentMethod === "DUE" && !hasCustomer && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="dueName">Customer name</Label>
-                  <Input
-                    id="dueName"
-                    value={dueCustomerName}
-                    onChange={(e) => setDueCustomerName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duePhone">Phone</Label>
-                  <Input
-                    id="duePhone"
-                    value={dueCustomerPhone}
-                    onChange={(e) => setDueCustomerPhone(e.target.value)}
-                  />
+              <div>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Enter a name or phone number (at least one).
+                </p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="dueName">Customer name</Label>
+                    <Input
+                      id="dueName"
+                      value={dueCustomerName}
+                      onChange={(e) => setDueCustomerName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="duePhone">Phone</Label>
+                    <Input
+                      id="duePhone"
+                      value={dueCustomerPhone}
+                      onChange={(e) => setDueCustomerPhone(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             )}
