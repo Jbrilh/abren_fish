@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -72,7 +74,7 @@ export function SalesCharts({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end gap-4">
+      <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-2">
           <Label htmlFor="start">From</Label>
           <Input
@@ -95,6 +97,16 @@ export function SalesCharts({
             className="w-44"
           />
         </div>
+        <Button
+          variant="outline"
+          className="gap-1.5"
+          render={
+            <a href={`/api/reports/sales/export?start=${start}&end=${end}`} />
+          }
+        >
+          <Download className="size-4" />
+          Download Excel
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 max-w-2xl sm:grid-cols-3">
