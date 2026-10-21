@@ -60,13 +60,19 @@ export default async function OrdersPage() {
             {orders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell>
-                  {order.type === "DINE_IN" ? "Dine-in" : "Delivery"}
+                  {order.type === "DINE_IN"
+                    ? "Dine-in"
+                    : order.type === "BEU_DELIVERY"
+                    ? "Beu Delivery"
+                    : "Delivery"}
                 </TableCell>
                 <TableCell>
                   {order.type === "DINE_IN"
                     ? `Ticket ${order.ticketNumber ?? "-"}${
                         order.tableNumber ? ` (Table ${order.tableNumber})` : ""
                       }`
+                    : order.type === "BEU_DELIVERY"
+                    ? "Beu Delivery"
                     : `${order.customer?.name ?? "-"} (${order.customer?.phone ?? "-"})`}
                 </TableCell>
                 <TableCell>{order.items.length}</TableCell>

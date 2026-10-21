@@ -22,6 +22,11 @@ export async function computeExpectedCash(dateStr: string) {
 
   return orders.reduce((sum, order) => {
     const total = computeOrderTotal(order.items, order.type);
-    return sum + (order.paymentMethod === "HALF_HALF" ? total * 0.5 : total);
+    if (order.paymentMethod !== "HALF_HALF") return sum + total;
+    // Older half/half orders predate the amount-paid field - fall back to
+    // the 50/50 assumption so their historical reconciliation doesn't shift.
+    const cashReceived =
+      order.amountPaid != null ? Number(order.amountPaid) : total * 0.5;
+    return sum + cashReceived;
   }, 0);
 }

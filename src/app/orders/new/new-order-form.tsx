@@ -13,7 +13,7 @@ import { MenuItemPicker, type CartLine, type MenuItemOption } from "@/components
 
 export function NewOrderForm({ menuItems }: { menuItems: MenuItemOption[] }) {
   const router = useRouter();
-  const [type, setType] = useState<"DINE_IN" | "DELIVERY">("DINE_IN");
+  const [type, setType] = useState<"DINE_IN" | "DELIVERY" | "BEU_DELIVERY">("DINE_IN");
   const [ticketNumber, setTicketNumber] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -82,9 +82,21 @@ export function NewOrderForm({ menuItems }: { menuItems: MenuItemOption[] }) {
             >
               Delivery
             </Button>
+            <Button
+              type="button"
+              variant={type === "BEU_DELIVERY" ? "default" : "outline"}
+              onClick={() => setType("BEU_DELIVERY")}
+            >
+              Beu Delivery
+            </Button>
           </div>
 
-          {type === "DINE_IN" ? (
+          {type === "BEU_DELIVERY" ? (
+            <p className="text-sm text-muted-foreground">
+              No customer details needed - this order will be added to the Beu
+              Delivery due balance, to be collected later.
+            </p>
+          ) : type === "DINE_IN" ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="ticket">Ticket #</Label>
@@ -138,7 +150,11 @@ export function NewOrderForm({ menuItems }: { menuItems: MenuItemOption[] }) {
             onSubmit={handlePlaceOrder}
             submitLabel="Place order"
             isSubmitting={isSubmitting}
-            extraFee={type === "DELIVERY" ? TAKEAWAY_BOX_FEE : undefined}
+            extraFee={
+              type === "DELIVERY" || type === "BEU_DELIVERY"
+                ? TAKEAWAY_BOX_FEE
+                : undefined
+            }
             extraFeeLabel="Takeaway boxes"
           />
         </CardContent>

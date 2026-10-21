@@ -36,6 +36,9 @@ export async function applyInventoryDelta(
 
 export const TAKEAWAY_BOX_FEE = 70;
 
+export const BEU_DELIVERY_CUSTOMER_ID = "beu-delivery-partner";
+export const BEU_DELIVERY_CUSTOMER_NAME = "Beu Delivery";
+
 export function computeOrderTotal(
   items: { priceAtOrder: Prisma.Decimal | string; quantity: number }[],
   orderType?: string
@@ -44,7 +47,9 @@ export function computeOrderTotal(
     (sum, item) => sum + Number(item.priceAtOrder) * item.quantity,
     0
   );
-  return orderType === "DELIVERY" ? itemsTotal + TAKEAWAY_BOX_FEE : itemsTotal;
+  return orderType === "DELIVERY" || orderType === "BEU_DELIVERY"
+    ? itemsTotal + TAKEAWAY_BOX_FEE
+    : itemsTotal;
 }
 
 export const NON_CANCELLABLE_STATUSES = ["PAID", "SERVED", "CANCELLED"];

@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/api-auth";
 import { createOrderSchema } from "@/lib/validations/order";
-import { applyInventoryDelta } from "@/lib/order-service";
+import {
+  applyInventoryDelta,
+  BEU_DELIVERY_CUSTOMER_ID,
+  BEU_DELIVERY_CUSTOMER_NAME,
+} from "@/lib/order-service";
 
 export async function GET(request: Request) {
   const { error } = await requireUser();
@@ -48,6 +52,16 @@ export async function POST(request: Request) {
         where: { phone: data.customerPhone! },
         update: { name: data.customerName! },
         create: { name: data.customerName!, phone: data.customerPhone! },
+      });
+      customerId = customer.id;
+    } else if (data.type === "BEU_DELIVERY") {
+      // Beu Delivery is a single recurring partner, not a per-order
+      // customer - always resolve to the same fixed customer record so
+      // their due balance accumulates across every order.
+      const customer = await tx.customer.upsert({
+        where: { id: BEU_DELIVERY_CUSTOMER_ID },
+        update: {},
+        create: { id: BEU_DELIVERY_CUSTOMER_ID, name: BEU_DELIVERY_CUSTOMER_NAME },
       });
       customerId = customer.id;
     }

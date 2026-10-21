@@ -30,7 +30,33 @@ export async function POST(
     );
   }
 
-  if (data.paymentMethod === "DUE" && !order.customerId) {
+  const total = computeOrderTotal(order.items, order.type);
+
+  const isHalfHalf = data.paymentMethod === "HALF_HALF";
+  let unpaidAmount = 0;
+  if (isHalfHalf) {
+    if (data.amountPaid == null) {
+      return Response.json(
+        {
+          error: { formErrors: ["Enter the amount paid."] },
+        },
+        { status: 400 }
+      );
+    }
+    if (data.amountPaid > total) {
+      return Response.json(
+        {
+          error: { formErrors: ["Amount paid cannot exceed the order total."] },
+        },
+        { status: 400 }
+      );
+    }
+    unpaidAmount = Math.round((total - data.amountPaid) * 100) / 100;
+  }
+
+  const isDueLike = data.paymentMethod === "DUE" || (isHalfHalf && unpaidAmount > 0);
+
+  if (isDueLike && !order.customerId) {
     if (!data.customerName?.trim() && !data.customerPhone?.trim()) {
       return Response.json(
         {
@@ -45,12 +71,10 @@ export async function POST(
     }
   }
 
-  const total = computeOrderTotal(order.items, order.type);
-
   const updatedOrder = await prisma.$transaction(async (tx) => {
     let customerId = order.customerId;
 
-    if (data.paymentMethod === "DUE") {
+    if (isDueLike) {
       if (!customerId) {
         const name = data.customerName?.trim() || data.customerPhone!.trim();
         // Phone is the only reliable lookup key - with name-only, there's no
@@ -65,17 +89,19 @@ export async function POST(
         customerId = customer.id;
       }
 
+      const dueAmount = data.paymentMethod === "DUE" ? total : unpaidAmount;
+
       await tx.dueTransaction.create({
         data: {
           customerId,
           orderId: id,
-          amount: total,
+          amount: dueAmount,
         },
       });
 
       await tx.customer.update({
         where: { id: customerId },
-        data: { dueBalance: { increment: total } },
+        data: { dueBalance: { increment: dueAmount } },
       });
     }
 
@@ -86,6 +112,7 @@ export async function POST(
         status: "PAID",
         paidAt: new Date(),
         customerId,
+        amountPaid: isHalfHalf ? data.amountPaid : null,
       },
       include: {
         items: { include: { menuItem: true }, orderBy: { createdAt: "asc" } },

@@ -7,7 +7,7 @@ const orderItemInput = z.object({
 
 export const createOrderSchema = z
   .object({
-    type: z.enum(["DINE_IN", "DELIVERY"]),
+    type: z.enum(["DINE_IN", "DELIVERY", "BEU_DELIVERY"]),
     ticketNumber: z.string().min(1).optional(),
     tableNumber: z.string().min(1).optional(),
     customerName: z.string().min(1).optional(),

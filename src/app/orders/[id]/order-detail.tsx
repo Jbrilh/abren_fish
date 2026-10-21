@@ -74,6 +74,7 @@ export function OrderDetail({
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [dueCustomerName, setDueCustomerName] = useState("");
   const [dueCustomerPhone, setDueCustomerPhone] = useState("");
+  const [halfHalfAmountPaid, setHalfHalfAmountPaid] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   useEffect(() => {
@@ -99,8 +100,19 @@ export function OrderDetail({
   const locked = LOCKED_STATUSES.includes(order.status);
   const cancellable = CANCELLABLE_STATUSES.includes(order.status);
   const readyForCheckout = order.status === "SERVED";
+  const isBeuDelivery = order.type === "BEU_DELIVERY";
   const hasCustomer = !!order.customerName;
   const total = computeOrderTotal(order.items, order.type);
+  const effectivePaymentMethod = isBeuDelivery ? "DUE" : paymentMethod;
+  const parsedAmountPaid = Number(halfHalfAmountPaid);
+  const halfHalfUnpaid =
+    effectivePaymentMethod === "HALF_HALF" &&
+    halfHalfAmountPaid.trim() !== "" &&
+    !Number.isNaN(parsedAmountPaid)
+      ? Math.max(total - parsedAmountPaid, 0)
+      : 0;
+  const needsDueCustomer =
+    (effectivePaymentMethod === "DUE" || halfHalfUnpaid > 0) && !hasCustomer;
 
   async function handleAddItems(items: CartLine[]) {
     setIsAdding(true);
@@ -159,13 +171,23 @@ export function OrderDetail({
   }
 
   async function handleCheckout() {
-    if (!paymentMethod) {
+    if (!effectivePaymentMethod) {
       toast.error("Select a payment method.");
       return;
     }
+    if (effectivePaymentMethod === "HALF_HALF") {
+      if (
+        halfHalfAmountPaid.trim() === "" ||
+        Number.isNaN(parsedAmountPaid) ||
+        parsedAmountPaid < 0 ||
+        parsedAmountPaid > total
+      ) {
+        toast.error("Enter a valid amount paid (0 to the order total).");
+        return;
+      }
+    }
     if (
-      paymentMethod === "DUE" &&
-      !hasCustomer &&
+      needsDueCustomer &&
       !dueCustomerName.trim() &&
       !dueCustomerPhone.trim()
     ) {
@@ -179,15 +201,15 @@ export function OrderDetail({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          paymentMethod,
-          customerName:
-            paymentMethod === "DUE" && !hasCustomer
-              ? dueCustomerName.trim() || undefined
-              : undefined,
-          customerPhone:
-            paymentMethod === "DUE" && !hasCustomer
-              ? dueCustomerPhone.trim() || undefined
-              : undefined,
+          paymentMethod: effectivePaymentMethod,
+          amountPaid:
+            effectivePaymentMethod === "HALF_HALF" ? parsedAmountPaid : undefined,
+          customerName: needsDueCustomer
+            ? dueCustomerName.trim() || undefined
+            : undefined,
+          customerPhone: needsDueCustomer
+            ? dueCustomerPhone.trim() || undefined
+            : undefined,
         }),
       });
       if (!res.ok) {
@@ -211,7 +233,11 @@ export function OrderDetail({
               ? `Ticket ${order.ticketNumber ?? "-"}${
                   order.tableNumber ? ` (Table ${order.tableNumber})` : ""
                 }`
-              : `${order.customerName} (${order.customerPhone})`}
+              : isBeuDelivery
+              ? "Beu Delivery"
+              : `${order.customerName}${
+                  order.customerPhone ? ` (${order.customerPhone})` : ""
+                }`}
           </h1>
           <p className="text-sm text-muted-foreground">
             Created by {order.createdByName}
@@ -275,7 +301,7 @@ export function OrderDetail({
               </TableBody>
             </Table>
           )}
-          {order.type === "DELIVERY" && (
+          {(order.type === "DELIVERY" || isBeuDelivery) && (
             <p className="text-sm text-muted-foreground text-right mt-3">
               Takeaway boxes: {TAKEAWAY_BOX_FEE.toFixed(2)}
             </p>
@@ -292,23 +318,50 @@ export function OrderDetail({
             <CardTitle>Checkout</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Payment method</Label>
-              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v ?? "")}>
-                <SelectTrigger className="w-56">
-                  <SelectValue placeholder="Select payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isBeuDelivery ? (
+              <p className="text-sm text-muted-foreground">
+                This order will be added to the Beu Delivery due balance.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <Label>Payment method</Label>
+                <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v ?? "")}>
+                  <SelectTrigger className="w-56">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            {paymentMethod === "DUE" && !hasCustomer && (
+            {effectivePaymentMethod === "HALF_HALF" && (
+              <div className="space-y-2">
+                <Label htmlFor="halfHalfAmountPaid">Amount paid now</Label>
+                <Input
+                  id="halfHalfAmountPaid"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={total}
+                  value={halfHalfAmountPaid}
+                  onChange={(e) => setHalfHalfAmountPaid(e.target.value)}
+                  placeholder={total.toFixed(2)}
+                />
+                {halfHalfUnpaid > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Unpaid (goes to due tab): {halfHalfUnpaid.toFixed(2)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {needsDueCustomer && (
               <div>
                 <p className="mb-2 text-xs text-muted-foreground">
                   Enter a name or phone number (at least one).
